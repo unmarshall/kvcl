@@ -20,3 +20,4 @@ TODO
 config.ign.merged
 config.img
 config.vmdk
+launch.env

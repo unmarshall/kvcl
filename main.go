@@ -81,5 +81,5 @@ func parseCmdArgs() (string, error) {
 }
 
 func getBinaryAssetsPathFromEnv() string {
-	return os.Getenv("KUBEBUILDER_ASSET")
+	return os.Getenv("BINARY_ASSETS_DIR")
 }
