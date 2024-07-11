@@ -2,12 +2,10 @@ package util
 
 import (
 	"fmt"
-	"log/slog"
-	"os"
-	"path/filepath"
-
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"log/slog"
+	"os"
 
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
@@ -43,22 +41,10 @@ func CreateKubeconfigFileForRestConfig(restConfig *rest.Config) ([]byte, error) 
 	return kubeConfigBytes, nil
 }
 
-func WriteKubeConfig(kubeConfigBytes []byte) (string, error) {
-	currentDir, err := os.Getwd()
-	if err != nil {
+func WriteKubeConfig(kubeConfigPath string, kubeConfigBytes []byte) (string, error) {
+	if err := os.WriteFile(kubeConfigPath, kubeConfigBytes, 0644); err != nil {
 		return "", err
 	}
-	kubeConfigDir := filepath.Join(currentDir, "tmp")
-	if _, err = os.Stat(kubeConfigDir); os.IsNotExist(err) {
-		err = os.Mkdir(kubeConfigDir, 0755)
-		if err != nil {
-			return "", err
-		}
-	}
-	kubeConfigPath := filepath.Join(kubeConfigDir, "kubeconfig.yaml")
-	if err = os.WriteFile(kubeConfigPath, kubeConfigBytes, 0644); err != nil {
-		return "", err
-	}
-	slog.Info("KubeConfig to connect to Virtual Custer written to: " + kubeConfigPath)
+	slog.Info("KubeConfig to connect to Virtual Custer written to", "kubeConfigBytes", kubeConfigPath)
 	return kubeConfigPath, nil
 }

@@ -22,26 +22,34 @@ func main() {
 	)
 	ctx := setupSignalHandler()
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	binaryAssetsPath, err := parseCmdArgs()
+	binaryAssetsDir, err := parseCmdArgs()
 	if err != nil {
-		util.ExitAppWithError(1, fmt.Errorf("failed to get binary assets path: %w", err))
+		binaryAssetsDir = os.Getenv("BINARY_ASSETS_DIR")
+		if binaryAssetsDir == "" {
+			util.ExitAppWithError(1, fmt.Errorf("failed to get binary assets dir from either flag -binary-assets-dir  or env variable BINARY_ASSETS_DIR: %w", err))
+		}
 	}
-	logger.Info("starting virtual cluster", "binaryAssetsPath", binaryAssetsPath)
+	kubeConfigPath := os.Getenv("KUBECONFIG")
+	if kubeConfigPath == "" {
+		kubeConfigPath = "/tmp/virtual-kubeconfig.yaml"
+		logger.Warn("KUBECONFIG env not specified. Assuming path", "kubeConfigPath", kubeConfigPath)
+	}
 	defer func() {
 		logger.Info("shutting down virtual cluster...")
 		if err = vCluster.Stop(); err != nil {
 			logger.Error("failed to stop virtual cluster", "error", err)
 		}
 	}()
-	vCluster, err = startVirtualCluster(ctx, binaryAssetsPath)
+	logger.Info("starting virtual cluster", "binaryAssetsDir", binaryAssetsDir, "kubeConfigPath", kubeConfigPath)
+	vCluster, err = startVirtualCluster(ctx, binaryAssetsDir, kubeConfigPath)
 	if err != nil {
 		util.ExitAppWithError(1, fmt.Errorf("failed to start virtual cluster: %w", err))
 	}
 	<-ctx.Done()
 }
 
-func startVirtualCluster(ctx context.Context, binaryAssetsPath string) (api.ControlPlane, error) {
-	vCluster := control.NewControlPlane(binaryAssetsPath)
+func startVirtualCluster(ctx context.Context, binaryAssetsDir string, kubeConfigPath string) (api.ControlPlane, error) {
+	vCluster := control.NewControlPlane(binaryAssetsDir, kubeConfigPath)
 	if err := vCluster.Start(ctx); err != nil {
 		slog.Error("failed to start virtual cluster", "error", err)
 		return vCluster, err
@@ -67,7 +75,7 @@ func parseCmdArgs() (string, error) {
 	var binaryAssetsPath string
 	args := os.Args[1:]
 	fs := flag.CommandLine
-	fs.StringVar(&binaryAssetsPath, "binary-assets-path", "", "Path to the binary assets")
+	fs.StringVar(&binaryAssetsPath, "binary-assets-dir", "", "Path to the binary assets")
 	if err := fs.Parse(args); err != nil {
 		return "", err
 	}

@@ -30,6 +30,17 @@ function main() {
      popd || exit 1
    fi
 
+   if [[ ! -f "$binaryAssetsDir/kube-scheduler" ]]; then
+     echo -e "No kube-scheduler binary in: $binaryAssetsDir"
+     echo "Building kube-scheduler..."
+     pushd "$KUBE_SOURCE_DIR" || exit 1
+     go build -v -o /tmp/kube-scheduler cmd/kube-scheduler/scheduler.go
+     chmod +w "$binaryAssetsDir"
+     cp -v /tmp/kube-scheduler "$binaryAssetsDir"
+     ls -al "$binaryAssetsDir/kube-scheduler"
+     popd || exit 1
+   fi
+
   printf "BINARY_ASSETS_DIR=\"%s\"" "$binaryAssetsDir"  > "$LAUNCH_ENV_PATH"
   printf "Wrote env to %s\n" "$LAUNCH_ENV_PATH"
   echo

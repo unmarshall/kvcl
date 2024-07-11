@@ -20,15 +20,18 @@ import (
 
 // NewControlPlane creates a new control plane. None of the components of the
 // control-plane are initialized and started. Call Start to initialize and start the control-plane.
-func NewControlPlane(vClusterBinaryAssetsPath string) api.ControlPlane {
+func NewControlPlane(vClusterBinaryAssetsPath string, kubeConfigPath string) api.ControlPlane {
 	return &controlPlane{
 		binaryAssetsPath: vClusterBinaryAssetsPath,
+		kubeConfigPath:   kubeConfigPath,
 	}
 }
 
 type controlPlane struct {
 	// binaryAssetsPath is the path to the kube-api-server and etcd binaries.
 	binaryAssetsPath string
+	// kubeConfigPath is the kube config path for the virtual cluster.
+	kubeConfigPath string
 	// restConfig is the rest config to connect to the in-memory kube-api-server.
 	restConfig *rest.Config
 	// client connects to the in-memory kube-api-server.
@@ -52,7 +55,7 @@ func (c *controlPlane) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	kubeConfigPath, err := util.WriteKubeConfig(kubeConfigBytes)
+	kubeConfigPath, err := util.WriteKubeConfig(c.kubeConfigPath, kubeConfigBytes)
 	if err != nil {
 		return err
 	}
