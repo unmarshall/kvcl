@@ -31,7 +31,7 @@ func main() {
 	}
 	kubeConfigPath := os.Getenv("KUBECONFIG")
 	if kubeConfigPath == "" {
-		kubeConfigPath = "/tmp/virtual-kubeconfig.yaml"
+		kubeConfigPath = "/tmp/vck.yaml"
 		logger.Warn("KUBECONFIG env not specified. Assuming path", "kubeConfigPath", kubeConfigPath)
 	}
 	defer func() {

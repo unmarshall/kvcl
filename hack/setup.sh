@@ -19,6 +19,11 @@ function main() {
         exit 1
    fi
 
+  if [[ ! -d $KUBE_SOURCE_DIR ]]; then
+      echoErr "Please checkout k8s sources into $KUBE_SOURCE_DIR"
+      exit 1
+  fi
+
    if [[ ! -f "$binaryAssetsDir/kube-scheduler" ]]; then
      echo -e "No kube-scheduler binary in: $binaryAssetsDir"
      echo "Building kube-scheduler..."
