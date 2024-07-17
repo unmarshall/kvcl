@@ -48,9 +48,6 @@ func main() {
 	if err != nil {
 		util.ExitAppWithError(1, fmt.Errorf("failed to start virtual cluster: %w", err))
 	}
-	if cfg.startScalingRecommender {
-		startScalingRecommender(cfg.targetClusterCAConfigPath, cfg.kubeConfigPath)
-	}
 	<-ctx.Done()
 }
 
@@ -62,14 +59,6 @@ func startVirtualCluster(ctx context.Context, binaryAssetsDir string, kubeConfig
 	}
 	slog.Info("virtual cluster started successfully")
 	return vCluster, nil
-}
-
-func startScalingRecommender(caConfigPath string, kubeConfigPath string) error {
-	caCfg, err := util.ParseClusterAutoscalerConfig(caConfigPath)
-	if err != nil {
-		return err
-	}
-
 }
 
 func setupSignalHandler() context.Context {
@@ -90,8 +79,6 @@ func parseCmdArgs() (config, error) {
 	args := os.Args[1:]
 	fs := flag.CommandLine
 	fs.StringVar(&cfg.binaryAssetsPath, "binary-assets-dir", "", "Path to the binary assets for etcd and kube-apiserver")
-	fs.BoolVar(&cfg.startScalingRecommender, "start-scaling-recommender", false, "Start the new scaling-recommender")
-	fs.StringVar(&cfg.targetClusterCAConfigPath, "target-cluster-ca-config-path", "", "Path to the target cluster CA config")
 	fs.StringVar(&cfg.kubeConfigPath, "kube-config-path", defaultKVCLKubeConfigPath, "Path where the kubeconfig file for the virtual cluster is written")
 
 	if err := fs.Parse(args); err != nil {
