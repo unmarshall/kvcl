@@ -9,9 +9,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"unmarshall/kvcl/api"
-	"unmarshall/kvcl/pkg/control"
-	"unmarshall/kvcl/pkg/util"
+	"github.com/unmarshall/kvcl/api"
+	"github.com/unmarshall/kvcl/pkg/control"
+	"github.com/unmarshall/kvcl/pkg/util"
 )
 
 func main() {

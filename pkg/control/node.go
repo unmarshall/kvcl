@@ -6,11 +6,11 @@ import (
 	"log/slog"
 	"slices"
 
+	"github.com/unmarshall/kvcl/api"
+	"github.com/unmarshall/kvcl/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"unmarshall/kvcl/api"
-	"unmarshall/kvcl/pkg/util"
 )
 
 type nodeControl struct {

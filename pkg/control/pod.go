@@ -5,14 +5,14 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/unmarshall/kvcl/api"
+	"github.com/unmarshall/kvcl/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"unmarshall/kvcl/api"
-	"unmarshall/kvcl/pkg/util"
 )
 
 type podControl struct {

@@ -7,12 +7,12 @@ import (
 	"slices"
 	"time"
 
+	"github.com/unmarshall/kvcl/api"
+	"github.com/unmarshall/kvcl/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"unmarshall/kvcl/api"
-	"unmarshall/kvcl/pkg/util"
 )
 
 func NewEventControl(cl client.Client) api.EventControl {
