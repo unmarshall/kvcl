@@ -3,4 +3,3 @@ Virtual cluster creates an in-memory k8s control-plane which comprises of the fo
 * Kube API Server
 * Single node Etcd
 * Kube Scheduler
-* Cluster Autoscaler with a local cloud-provider

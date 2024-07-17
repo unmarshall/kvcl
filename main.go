@@ -7,12 +7,22 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/unmarshall/kvcl/api"
 	"github.com/unmarshall/kvcl/pkg/control"
 	"github.com/unmarshall/kvcl/pkg/util"
 )
+
+type config struct {
+	binaryAssetsPath          string
+	startScalingRecommender   bool
+	targetClusterCAConfigPath string
+	kubeConfigPath            string
+}
+
+const defaultKVCLKubeConfigPath = "/tmp/kvcl.yaml"
 
 func main() {
 	defer util.OnExit()
@@ -22,28 +32,24 @@ func main() {
 	)
 	ctx := setupSignalHandler()
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	binaryAssetsDir, err := parseCmdArgs()
+	cfg, err := parseCmdArgs()
 	if err != nil {
-		binaryAssetsDir = os.Getenv("BINARY_ASSETS_DIR")
-		if binaryAssetsDir == "" {
-			util.ExitAppWithError(1, fmt.Errorf("failed to get binary assets dir from either flag -binary-assets-dir  or env variable BINARY_ASSETS_DIR: %w", err))
-		}
+		util.ExitAppWithError(1, fmt.Errorf("failed to parse cmd args :%w", err))
 	}
-	kubeConfigPath := os.Getenv("KUBECONFIG")
-	if kubeConfigPath == "" {
-		kubeConfigPath = "/tmp/vck.yaml"
-		logger.Warn("KUBECONFIG env not specified. Assuming path", "kubeConfigPath", kubeConfigPath)
-	}
+	// kubeConfigPath is where the kubeconfig file will be written to for any consumer to access the virtual cluster.
 	defer func() {
 		logger.Info("shutting down virtual cluster...")
 		if err = vCluster.Stop(); err != nil {
 			logger.Error("failed to stop virtual cluster", "error", err)
 		}
 	}()
-	logger.Info("starting virtual cluster", "binaryAssetsDir", binaryAssetsDir, "kubeConfigPath", kubeConfigPath)
-	vCluster, err = startVirtualCluster(ctx, binaryAssetsDir, kubeConfigPath)
+	logger.Info("starting virtual cluster", "config", cfg)
+	vCluster, err = startVirtualCluster(ctx, cfg.binaryAssetsPath, cfg.kubeConfigPath)
 	if err != nil {
 		util.ExitAppWithError(1, fmt.Errorf("failed to start virtual cluster: %w", err))
+	}
+	if cfg.startScalingRecommender {
+		startScalingRecommender(cfg.targetClusterCAConfigPath, cfg.kubeConfigPath)
 	}
 	<-ctx.Done()
 }
@@ -56,6 +62,14 @@ func startVirtualCluster(ctx context.Context, binaryAssetsDir string, kubeConfig
 	}
 	slog.Info("virtual cluster started successfully")
 	return vCluster, nil
+}
+
+func startScalingRecommender(caConfigPath string, kubeConfigPath string) error {
+	caCfg, err := util.ParseClusterAutoscalerConfig(caConfigPath)
+	if err != nil {
+		return err
+	}
+
 }
 
 func setupSignalHandler() context.Context {
@@ -71,21 +85,36 @@ func setupSignalHandler() context.Context {
 	return ctx
 }
 
-func parseCmdArgs() (string, error) {
-	var binaryAssetsPath string
+func parseCmdArgs() (config, error) {
+	cfg := config{}
 	args := os.Args[1:]
 	fs := flag.CommandLine
-	fs.StringVar(&binaryAssetsPath, "binary-assets-dir", "", "Path to the binary assets")
+	fs.StringVar(&cfg.binaryAssetsPath, "binary-assets-dir", "", "Path to the binary assets for etcd and kube-apiserver")
+	fs.BoolVar(&cfg.startScalingRecommender, "start-scaling-recommender", false, "Start the new scaling-recommender")
+	fs.StringVar(&cfg.targetClusterCAConfigPath, "target-cluster-ca-config-path", "", "Path to the target cluster CA config")
+	fs.StringVar(&cfg.kubeConfigPath, "kube-config-path", defaultKVCLKubeConfigPath, "Path where the kubeconfig file for the virtual cluster is written")
+
 	if err := fs.Parse(args); err != nil {
-		return "", err
+		return cfg, err
 	}
-	if binaryAssetsPath == "" {
-		binaryAssetsPath = getBinaryAssetsPathFromEnv()
+	if err := cfg.resolveBinaryAssetsPath(); err != nil {
+		return cfg, err
 	}
-	if binaryAssetsPath == "" {
-		return "", fmt.Errorf("cannot find binary-assets-path")
+	// ensure that targetClusterCAConfigPath is set when startScalingRecommender is set to true.
+	if cfg.startScalingRecommender && len(strings.TrimSpace(cfg.targetClusterCAConfigPath)) == 0 {
+		return cfg, fmt.Errorf("target-cluster-ca-config-path is required when start-scaling-recommender is set to true")
 	}
-	return binaryAssetsPath, nil
+	return cfg, nil
+}
+
+func (c *config) resolveBinaryAssetsPath() error {
+	if c.binaryAssetsPath == "" {
+		c.binaryAssetsPath = getBinaryAssetsPathFromEnv()
+	}
+	if c.binaryAssetsPath == "" {
+		return fmt.Errorf("cannot find binary-assets-path")
+	}
+	return nil
 }
 
 func getBinaryAssetsPathFromEnv() string {
