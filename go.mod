@@ -1,4 +1,4 @@
-module unmarshall/kvcl
+module github.com/unmarshall/kvcl
 
 go 1.22.2
 
