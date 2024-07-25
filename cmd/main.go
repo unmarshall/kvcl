@@ -87,6 +87,7 @@ func parseCmdArgs() (config, error) {
 	if err := cfg.resolveBinaryAssetsPath(); err != nil {
 		return cfg, err
 	}
+
 	// ensure that targetClusterCAConfigPath is set when startScalingRecommender is set to true.
 	if cfg.startScalingRecommender && len(strings.TrimSpace(cfg.targetClusterCAConfigPath)) == 0 {
 		return cfg, fmt.Errorf("target-cluster-ca-config-path is required when start-scaling-recommender is set to true")
