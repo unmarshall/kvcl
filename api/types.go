@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +28,8 @@ type ControlPlane interface {
 	PodControl() PodControl
 	// EventControl returns the EventControl for the in-memory controlPlane. Should only be called after Start.
 	EventControl() EventControl
+	// Client returns the client used to connect to the in-memory controlPlane.
+	Client() client.Client
 }
 
 // NodeFilter is a predicate that takes in a Node and returns the predicate result as a boolean.

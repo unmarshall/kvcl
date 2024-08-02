@@ -79,7 +79,7 @@ func parseCmdArgs() (config, error) {
 	args := os.Args[1:]
 	fs := flag.CommandLine
 	fs.StringVar(&cfg.binaryAssetsPath, "binary-assets-dir", "", "Path to the binary assets for etcd and kube-apiserver")
-	fs.StringVar(&cfg.kubeConfigPath, "kube-config-path", defaultKVCLKubeConfigPath, "Path where the kubeconfig file for the virtual cluster is written")
+	fs.StringVar(&cfg.kubeConfigPath, "kubeconfig", defaultKVCLKubeConfigPath, "Path where the kubeconfig file for the virtual cluster is written")
 
 	if err := fs.Parse(args); err != nil {
 		return cfg, err

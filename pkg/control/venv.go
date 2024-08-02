@@ -120,6 +120,10 @@ func (c *controlPlane) EventControl() api.EventControl {
 	return NewEventControl(c.client)
 }
 
+func (c *controlPlane) Client() client.Client {
+	return c.client
+}
+
 func (c *controlPlane) startKAPIAndEtcd() (vEnv *envtest.Environment, cfg *rest.Config, k8sClient client.Client, err error) {
 	vEnv = &envtest.Environment{
 		Scheme:                   scheme.Scheme,
