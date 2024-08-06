@@ -1,9 +1,12 @@
 PROJECT_DIR="$(cd "$(dirname "${SCRIPT_DIR}")" &>/dev/null && pwd)"
 LAUNCH_ENV_FILE="launch.env"
 LAUNCH_ENV_PATH="$PROJECT_DIR/$LAUNCH_ENV_FILE"
-KUBE_SOURCE_DIR="$HOME/go/src/github.com/kubernetes/kubernetes"
 
-function main() {
+function echoErr() {
+    printf "%s\n" "$*" >&2
+}
+
+function setup_envtest() {
    local errorCode
    printf "Installing setup-envtest...\n"
    GOOS=$(go env GOOS)
@@ -19,37 +22,11 @@ function main() {
         exit 1
    fi
 
-  if [[ ! -d $KUBE_SOURCE_DIR ]]; then
-      echoErr "Please checkout k8s sources into $KUBE_SOURCE_DIR"
-      exit 1
-  fi
-
-   if [[ ! -f "$binaryAssetsDir/kube-scheduler" ]]; then
-     echo -e "No kube-scheduler binary in: $binaryAssetsDir"
-     echo "Building kube-scheduler..."
-     pushd "$KUBE_SOURCE_DIR" || exit 1
-     go build -v -o /tmp/kube-scheduler cmd/kube-scheduler/scheduler.go
-     chmod +w "$binaryAssetsDir"
-     cp -v /tmp/kube-scheduler "$binaryAssetsDir"
-     ls -al "$binaryAssetsDir/kube-scheduler"
-     popd || exit 1
-   fi
-
-   if [[ ! -f "$binaryAssetsDir/kube-scheduler" ]]; then
-     echo -e "No kube-scheduler binary in: $binaryAssetsDir"
-     echo "Building kube-scheduler..."
-     pushd "$KUBE_SOURCE_DIR" || exit 1
-     go build -v -o /tmp/kube-scheduler cmd/kube-scheduler/scheduler.go
-     chmod +w "$binaryAssetsDir"
-     cp -v /tmp/kube-scheduler "$binaryAssetsDir"
-     ls -al "$binaryAssetsDir/kube-scheduler"
-     popd || exit 1
-   fi
-
   printf "BINARY_ASSETS_DIR=\"%s\"" "$binaryAssetsDir"  > "$LAUNCH_ENV_PATH"
   printf "Wrote env to %s\n" "$LAUNCH_ENV_PATH"
-  echo
-  echo "NOTE: COPY & EXECUTE THIS->> set -o allexport && source launch.env && set +o allexport"
-  echo "Then launch virtual cluster using go run main.go"
 }
-main "$@"
+
+setup_envtest "$@"
+echo
+echo "NOTE: COPY & EXECUTE THIS->> set -o allexport && source launch.env && set +o allexport"
+echo "Then launch virtual cluster using go run main.go"

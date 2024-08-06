@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/unmarshall/kvcl/api"
@@ -79,7 +78,7 @@ func parseCmdArgs() (config, error) {
 	args := os.Args[1:]
 	fs := flag.CommandLine
 	fs.StringVar(&cfg.binaryAssetsPath, "binary-assets-dir", "", "Path to the binary assets for etcd and kube-apiserver")
-	fs.StringVar(&cfg.kubeConfigPath, "kubeconfig", defaultKVCLKubeConfigPath, "Path where the kubeconfig file for the virtual cluster is written")
+	fs.StringVar(&cfg.kubeConfigPath, "target-kvcl-kubeconfig", defaultKVCLKubeConfigPath, "Path where the kubeconfig file for the virtual cluster is written")
 
 	if err := fs.Parse(args); err != nil {
 		return cfg, err
@@ -88,10 +87,6 @@ func parseCmdArgs() (config, error) {
 		return cfg, err
 	}
 
-	// ensure that targetClusterCAConfigPath is set when startScalingRecommender is set to true.
-	if cfg.startScalingRecommender && len(strings.TrimSpace(cfg.targetClusterCAConfigPath)) == 0 {
-		return cfg, fmt.Errorf("target-cluster-ca-config-path is required when start-scaling-recommender is set to true")
-	}
 	return cfg, nil
 }
 
