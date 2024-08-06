@@ -42,7 +42,7 @@ func main() {
 			logger.Error("failed to stop virtual cluster", "error", err)
 		}
 	}()
-	logger.Info("starting virtual cluster", "config", cfg)
+	logger.Info("starting virtual cluster", "embed", cfg)
 	vCluster, err = startVirtualCluster(ctx, cfg.binaryAssetsPath, cfg.kubeConfigPath)
 	if err != nil {
 		util.ExitAppWithError(1, fmt.Errorf("failed to start virtual cluster: %w", err))

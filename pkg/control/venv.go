@@ -3,19 +3,17 @@ package control
 import (
 	"context"
 	"fmt"
-	schedulingv1 "k8s.io/api/scheduling/v1"
-	storagev1 "k8s.io/api/storage/v1"
-	"log/slog"
-	"path/filepath"
-
 	"github.com/unmarshall/kvcl/api"
 	"github.com/unmarshall/kvcl/pkg/common"
 	"github.com/unmarshall/kvcl/pkg/util"
+	schedulingv1 "k8s.io/api/scheduling/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/events"
 	schedulerappconfig "k8s.io/kubernetes/cmd/kube-scheduler/app/config"
 	"k8s.io/kubernetes/pkg/scheduler"
+	"log/slog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
@@ -157,8 +155,7 @@ func (c *controlPlane) startKAPIAndEtcd() (vEnv *envtest.Environment, cfg *rest.
 
 func (c *controlPlane) startScheduler(ctx context.Context, restConfig *rest.Config) error {
 	slog.Info("creating in-memory kube-scheduler configuration...")
-	schedulerConfigPath := filepath.Join("pkg", "control", "assets", "scheduler-config.yaml")
-	sac, err := util.CreateSchedulerAppConfig(restConfig, schedulerConfigPath)
+	sac, err := util.CreateSchedulerAppConfig(restConfig)
 	if err != nil {
 		return err
 	}
