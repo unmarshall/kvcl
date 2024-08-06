@@ -3,6 +3,8 @@ package control
 import (
 	"context"
 	"fmt"
+	schedulingv1 "k8s.io/api/scheduling/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	"log/slog"
 	"path/filepath"
 
@@ -89,8 +91,17 @@ func (c *controlPlane) FactoryReset(ctx context.Context) error {
 	if err := c.PodControl().DeleteAllPods(ctx, common.DefaultNamespace); err != nil {
 		return fmt.Errorf("failed to delete all pods: %w", err)
 	}
+	slog.Info("Removing all events...")
 	if err := c.EventControl().DeleteAllEvents(ctx, common.DefaultNamespace); err != nil {
 		return fmt.Errorf("failed to delete all events: %w", err)
+	}
+	slog.Info("Removing all priority classes...")
+	if err := c.client.DeleteAllOf(ctx, &schedulingv1.PriorityClass{}, client.InNamespace(common.DefaultNamespace)); err != nil {
+		return fmt.Errorf("failed to delete all priority classes: %w", err)
+	}
+	slog.Info("Removing all CSINodes ...")
+	if err := c.client.DeleteAllOf(ctx, &storagev1.CSINode{}); err != nil {
+		return fmt.Errorf("failed to delete all CSINodes: %w", err)
 	}
 	slog.Info("In-memory controlPlane factory reset successfully")
 	return nil
