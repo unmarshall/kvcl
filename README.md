@@ -16,7 +16,7 @@ a `launch.env` in the project root directory.
 
 Start the virtual cluster by running the following command:
 ```bash
-go run main.go [flags]
+go run cmd/main.go [flags]
 ```
 **Flags**:
 * `--target-kvcl-kubeconfig` : Path where the kubeconfig to connect to the virtual cluster will be written. Default value is `/tmp/kvcl.yaml`
