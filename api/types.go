@@ -74,7 +74,7 @@ type PodControl interface {
 	// GetPodsMatchingPodNames returns all pods matching the given pod names. You would use this method over ListPods
 	// to reduce the load on KAPI. Get calls are cached and list calls are not. Once in-memory KAPI is
 	// replaced with the fake API server then this optimization will no longer be needed.
-	GetPodsMatchingPodNames(ctx context.Context, namespace string, podNames ...string) ([]corev1.Pod, error)
+	GetPodsMatchingPodNames(ctx context.Context, namespace string, podNames ...string) ([]*corev1.Pod, error)
 	// CreatePodsAsUnscheduled creates new unscheduled pods in the in-memory controlPlane from the given schedulerName and pod specs.
 	CreatePodsAsUnscheduled(ctx context.Context, schedulerName string, pods ...corev1.Pod) error
 	// CreatePods creates new pods in the in-memory controlPlane.

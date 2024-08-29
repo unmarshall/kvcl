@@ -38,11 +38,11 @@ func (p podControl) ListPodsMatchingLabels(ctx context.Context, labels map[strin
 	return podList.Items, nil
 }
 
-func (p podControl) GetPodsMatchingPodNames(ctx context.Context, namespace string, podNames ...string) ([]corev1.Pod, error) {
-	pods := make([]corev1.Pod, 0, len(podNames))
+func (p podControl) GetPodsMatchingPodNames(ctx context.Context, namespace string, podNames ...string) ([]*corev1.Pod, error) {
+	pods := make([]*corev1.Pod, 0, len(podNames))
 	for _, podName := range podNames {
-		pod := corev1.Pod{}
-		if err := client.IgnoreNotFound(p.client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: podName}, &pod)); err != nil {
+		pod := &corev1.Pod{}
+		if err := client.IgnoreNotFound(p.client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: podName}, pod)); err != nil {
 			return nil, err
 		}
 		pods = append(pods, pod)
