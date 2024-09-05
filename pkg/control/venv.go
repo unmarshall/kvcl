@@ -94,7 +94,7 @@ func (c *controlPlane) FactoryReset(ctx context.Context) error {
 		return fmt.Errorf("failed to delete all events: %w", err)
 	}
 	slog.Info("Removing all priority classes...")
-	if err := c.client.DeleteAllOf(ctx, &schedulingv1.PriorityClass{}, client.InNamespace(common.DefaultNamespace)); err != nil {
+	if err := c.client.DeleteAllOf(ctx, &schedulingv1.PriorityClass{}); err != nil {
 		return fmt.Errorf("failed to delete all priority classes: %w", err)
 	}
 	slog.Info("Removing all CSINodes ...")
