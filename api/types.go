@@ -85,6 +85,8 @@ type PodControl interface {
 	DeleteAllPods(ctx context.Context, namespace string) error
 	// DeletePodsMatchingLabels deletes all pods matching labels
 	DeletePodsMatchingLabels(ctx context.Context, namespace string, labels map[string]string) error
+	// DeletePodsMatchingNames deletes all pods matching pod names
+	DeletePodsMatchingNames(ctx context.Context, namespace string, podNames ...string) error
 }
 
 // PodInfo contains relevant information about a pod.
