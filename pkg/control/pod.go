@@ -86,9 +86,6 @@ func (p podControl) CreatePods(ctx context.Context, pods ...*corev1.Pod) error {
 		clone.ObjectMeta.UID = ""
 		clone.ObjectMeta.ResourceVersion = ""
 		clone.ObjectMeta.CreationTimestamp = metav1.Time{}
-		// remove any priority settings as the virtual environment does not use them.
-		clone.Spec.Priority = nil
-		clone.Spec.PriorityClassName = ""
 		clone.Spec.TerminationGracePeriodSeconds = pointer.Int64(0)
 		errs = errors.Join(errs, p.client.Create(ctx, clone))
 	}
