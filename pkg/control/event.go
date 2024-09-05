@@ -43,8 +43,9 @@ func (e *eventControl) ListEvents(ctx context.Context, namespace string, filters
 }
 
 // GetPodSchedulingEvents watches for pod scheduling events and returns the names of the pods that have been scheduled and unscheduled.
-func (e *eventControl) GetPodSchedulingEvents(ctx context.Context, namespace string, since time.Time, pods []*corev1.Pod, timeout time.Duration) (scheduledPodNames sets.Set[string], unscheduledPodNames sets.Set[string], err error) {
-	tick := time.NewTicker(timeout)
+func (e *eventControl) GetPodSchedulingEvents(ctx context.Context, namespace string, since time.Time, pods []*corev1.Pod, podTimeout time.Duration) (scheduledPodNames sets.Set[string], unscheduledPodNames sets.Set[string], err error) {
+	totalTimeout := podTimeout * time.Duration(len(pods))
+	tick := time.NewTicker(totalTimeout)
 	defer tick.Stop()
 	pollTick := time.NewTicker(10 * time.Millisecond)
 	defer pollTick.Stop()

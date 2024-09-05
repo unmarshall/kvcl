@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"slices"
 
 	"github.com/unmarshall/kvcl/api"
 	"github.com/unmarshall/kvcl/pkg/util"
@@ -88,6 +89,19 @@ func (p podControl) CreatePods(ctx context.Context, pods ...*corev1.Pod) error {
 		clone.ObjectMeta.CreationTimestamp = metav1.Time{}
 		clone.Spec.TerminationGracePeriodSeconds = pointer.Int64(0)
 		errs = errors.Join(errs, p.client.Create(ctx, clone))
+	}
+	return errs
+}
+func (p podControl) DeletePodsMatchingNames(ctx context.Context, namespace string, podNames ...string) error {
+	var errs error
+	targetPods, err := p.ListPods(ctx, namespace, func(pod *corev1.Pod) bool {
+		return slices.Contains(podNames, pod.Name)
+	})
+	if err != nil {
+		return err
+	}
+	for _, pod := range targetPods {
+		errs = errors.Join(errs, p.client.Delete(ctx, &pod))
 	}
 	return errs
 }
