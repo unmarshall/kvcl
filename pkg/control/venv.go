@@ -134,12 +134,20 @@ func (c *controlPlane) Client() client.Client {
 }
 
 func (c *controlPlane) startKAPIAndEtcd() (vEnv *envtest.Environment, cfg *rest.Config, k8sClient client.Client, err error) {
+
+	etcdconfig := envtest.Etcd{}
+	slog.Info("Modifying etcd config")
+	etcdconfig.Configure().Append("auto-compaction-mode", "revision").Append("auto-compaction-retention", "5").Append("quota-backend-bytes", "8589934592")
+	cpConfig := envtest.ControlPlane{Etcd: &etcdconfig}
+
 	vEnv = &envtest.Environment{
 		Scheme:                   scheme.Scheme,
 		Config:                   nil,
 		BinaryAssetsDirectory:    c.binaryAssetsPath,
 		AttachControlPlaneOutput: true,
+		ControlPlane:             cpConfig,
 	}
+
 	cfg, err = vEnv.Start()
 	if err != nil {
 		err = fmt.Errorf("failed to start virtual controlPlane: %w", err)
