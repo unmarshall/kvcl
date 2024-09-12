@@ -88,7 +88,9 @@ func (p podControl) CreatePods(ctx context.Context, pods ...*corev1.Pod) error {
 		clone.ObjectMeta.ResourceVersion = ""
 		clone.ObjectMeta.CreationTimestamp = metav1.Time{}
 		clone.Spec.TerminationGracePeriodSeconds = pointer.Int64(0)
-		errs = errors.Join(errs, p.client.Create(ctx, clone))
+		if err := p.client.Create(ctx, clone); err != nil {
+			errs = errors.Join(errs, err)
+		}
 	}
 	return errs
 }
@@ -101,7 +103,9 @@ func (p podControl) DeletePodsMatchingNames(ctx context.Context, namespace strin
 		return err
 	}
 	for _, pod := range targetPods {
-		errs = errors.Join(errs, p.client.Delete(ctx, &pod))
+		if err = p.client.Delete(ctx, &pod); err != nil {
+			errs = errors.Join(errs, err)
+		}
 	}
 	return errs
 }
