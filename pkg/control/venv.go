@@ -14,16 +14,21 @@ import (
 	schedulerappconfig "k8s.io/kubernetes/cmd/kube-scheduler/app/config"
 	"k8s.io/kubernetes/pkg/scheduler"
 	"log/slog"
+	"os"
+	"path"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
 
+var auditPolicyFile = "audit-policy.yaml"
+
 // NewControlPlane creates a new control plane. None of the components of the
 // control-plane are initialized and started. Call Start to initialize and start the control-plane.
-func NewControlPlane(vClusterBinaryAssetsPath string, kubeConfigPath string) api.ControlPlane {
+func NewControlPlane(vClusterBinaryAssetsPath string, kubeConfigPath string, auditLogs bool) api.ControlPlane {
 	return &controlPlane{
 		binaryAssetsPath: vClusterBinaryAssetsPath,
 		kubeConfigPath:   kubeConfigPath,
+		auditLogs:        auditLogs,
 	}
 }
 
@@ -32,6 +37,8 @@ type controlPlane struct {
 	binaryAssetsPath string
 	// kubeConfigPath is the kube config path for the virtual cluster.
 	kubeConfigPath string
+	// auditLogs controls whether kube api-server audit logs (for incoming calls) are persisted or not.
+	auditLogs bool
 	// restConfig is the rest config to connect to the in-memory kube-api-server.
 	restConfig *rest.Config
 	// client connects to the in-memory kube-api-server.
@@ -72,8 +79,10 @@ func (c *controlPlane) Start(ctx context.Context) error {
 
 func (c *controlPlane) Stop() error {
 	slog.Info("Stopping in-memory kube-api-server and etcd...")
-	if err := c.testEnvironment.Stop(); err != nil {
-		slog.Warn("failed to stop in-memory kube-api-server and etcd", "error", err)
+	if c.testEnvironment != nil {
+		if err := c.testEnvironment.Stop(); err != nil {
+			slog.Warn("failed to stop in-memory kube-api-server and etcd", "error", err)
+		}
 	}
 	// once the context passed to the scheduler gets cancelled, the scheduler will stop as well.
 	// No need to stop the scheduler explicitly.
@@ -135,10 +144,23 @@ func (c *controlPlane) Client() client.Client {
 
 func (c *controlPlane) startKAPIAndEtcd() (vEnv *envtest.Environment, cfg *rest.Config, k8sClient client.Client, err error) {
 
-	etcdconfig := envtest.Etcd{}
+	var etcdConfig envtest.Etcd
 	slog.Info("Modifying etcd config")
-	etcdconfig.Configure().Append("auto-compaction-mode", "revision").Append("auto-compaction-retention", "5").Append("quota-backend-bytes", "8589934592")
-	cpConfig := envtest.ControlPlane{Etcd: &etcdconfig}
+	etcdConfig.Configure().Append("auto-compaction-mode", "revision").Append("auto-compaction-retention", "5").Append("quota-backend-bytes", "8589934592")
+
+	var asConfig envtest.APIServer
+	var auditPolicyPath = path.Join("/tmp", auditPolicyFile)
+	if c.auditLogs {
+		slog.Info("Modifying api-server config to add audit logging")
+		err = createAuditPolicyFile(auditPolicyPath)
+		if err != nil {
+			return
+		}
+		asConfig.Configure().
+			Append("audit-policy-file", auditPolicyPath).
+			Append("audit-log-path", "/tmp/kapi.log")
+	}
+	cpConfig := envtest.ControlPlane{Etcd: &etcdConfig, APIServer: &asConfig}
 
 	vEnv = &envtest.Environment{
 		Scheme:                   scheme.Scheme,
@@ -159,6 +181,19 @@ func (c *controlPlane) startKAPIAndEtcd() (vEnv *envtest.Environment, cfg *rest.
 		return
 	}
 	return
+}
+
+func createAuditPolicyFile(policyPath string) error {
+	_, err := os.Stat(policyPath)
+	if err == nil {
+		slog.Warn("audit policy file already exists.", "policyPath", policyPath)
+		return nil
+	}
+	if !os.IsNotExist(err) {
+		return err
+	}
+	err = os.WriteFile(policyPath, []byte(auditPolicyYAML), 0644)
+	return err
 }
 
 func (c *controlPlane) startScheduler(ctx context.Context, restConfig *rest.Config) error {
@@ -209,3 +244,35 @@ func startInformersAndWaitForSync(ctx context.Context, sac *schedulerappconfig.C
 		slog.Error("waiting for kube-scheduler handlers to sync", "error", err)
 	}
 }
+
+var auditPolicyYAML = `apiVersion: audit.k8s.io/v1
+kind: Policy
+# Don't generate audit events for all requests in RequestReceived stage.
+omitStages:
+  - "RequestReceived"
+rules:
+  - level: RequestResponse
+    resources:
+      - group: ""     # core API group, e.g., pods, services
+      - group: "apps" # e.g., deployments, statefulsets
+      - group: "batch" # e.g., jobs, cronjobs
+      - group: "autoscaling"
+      - group: "policy"
+      - group: "rbac.authorization.k8s.io"
+      - group: "networking.k8s.io"
+      - group: "storage.k8s.io"
+      - group: "apiextensions.k8s.io"
+      - group: "admissionregistration.k8s.io"
+      - group: "coordination.k8s.io"
+      - group: "events.k8s.io"
+      - group: "authentication.k8s.io"
+      - group: "authorization.k8s.io"
+      - group: "node.k8s.io"
+      - group: "scheduling.k8s.io"
+      - group: "certificates.k8s.io"
+      - group: "discovery.k8s.io"
+`
+var auditPolicyYAML1 = `apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata`

@@ -16,6 +16,8 @@ a `launch.env` in the project root directory.
 
 Start the virtual cluster by running the following command:
 ```bash
+./hack/launch.sh [flags]
+OR 
 go run cmd/main.go [flags]
 ```
 **Flags**:

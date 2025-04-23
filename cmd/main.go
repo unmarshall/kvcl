@@ -19,6 +19,7 @@ type config struct {
 	startScalingRecommender   bool
 	targetClusterCAConfigPath string
 	kubeConfigPath            string
+	auditLogs                 bool
 }
 
 const defaultKVCLKubeConfigPath = "/tmp/kvcl.yaml"
@@ -38,20 +39,22 @@ func main() {
 	// kubeConfigPath is where the kubeconfig file will be written to for any consumer to access the virtual cluster.
 	defer func() {
 		logger.Info("shutting down virtual cluster...")
-		if err = vCluster.Stop(); err != nil {
-			logger.Error("failed to stop virtual cluster", "error", err)
+		if vCluster != nil {
+			if err = vCluster.Stop(); err != nil {
+				logger.Error("failed to stop virtual cluster", "error", err)
+			}
 		}
 	}()
 	logger.Info("starting virtual cluster", "embed", cfg)
-	vCluster, err = startVirtualCluster(ctx, cfg.binaryAssetsPath, cfg.kubeConfigPath)
+	vCluster, err = startVirtualCluster(ctx, cfg.binaryAssetsPath, cfg.kubeConfigPath, cfg.auditLogs)
 	if err != nil {
 		util.ExitAppWithError(1, fmt.Errorf("failed to start virtual cluster: %w", err))
 	}
 	<-ctx.Done()
 }
 
-func startVirtualCluster(ctx context.Context, binaryAssetsDir string, kubeConfigPath string) (api.ControlPlane, error) {
-	vCluster := control.NewControlPlane(binaryAssetsDir, kubeConfigPath)
+func startVirtualCluster(ctx context.Context, binaryAssetsDir string, kubeConfigPath string, auditLogs bool) (api.ControlPlane, error) {
+	vCluster := control.NewControlPlane(binaryAssetsDir, kubeConfigPath, auditLogs)
 	if err := vCluster.Start(ctx); err != nil {
 		slog.Error("failed to start virtual cluster", "error", err)
 		return vCluster, err
@@ -79,6 +82,7 @@ func parseCmdArgs() (config, error) {
 	fs := flag.CommandLine
 	fs.StringVar(&cfg.binaryAssetsPath, "binary-assets-dir", "", "Path to the binary assets for etcd and kube-apiserver")
 	fs.StringVar(&cfg.kubeConfigPath, "target-kvcl-kubeconfig", defaultKVCLKubeConfigPath, "Path where the kubeconfig file for the virtual cluster is written")
+	fs.BoolVar(&cfg.auditLogs, "audit-logs", false, "Enable audit logs for API server")
 
 	if err := fs.Parse(args); err != nil {
 		return cfg, err
