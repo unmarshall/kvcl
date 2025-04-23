@@ -6,6 +6,7 @@
 /dev
 *.test
 
+bin/
 *.coverprofile
 /cover.out
 *coverprofile.out

@@ -8,9 +8,8 @@ Virtual cluster creates an in-memory k8s control-plane which comprises of the fo
 ## Usage
 
 ### Prerequisites
-* Ensure that you have installed `envtest`. You can just invoke `./hack/setup.sh` to install `envtest`. This will also create
-a `launch.env` in the project root directory.
-* Execute `set -o allexport && source launch.env && set +o allexport` this will set key-value pairs populated in `launch.env` as environment variables.
+* Ensure that you have installed `envtest`. You can just invoke `./hack/setup.sh` to setup `kvcl`.  (This will install controller-runtime envtest behind the scenes). 
+ This will also create a `launch.env` in the project root directory with the path to the k8s binary assets directory)
 
 ### Running the virtual cluster
 
