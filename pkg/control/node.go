@@ -3,6 +3,7 @@ package control
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"slices"
 
@@ -103,6 +104,24 @@ func (n nodeControl) DeleteAllNodes(ctx context.Context) error {
 
 func (n nodeControl) DeleteNodesMatchingLabels(ctx context.Context, labels map[string]string) error {
 	return n.client.DeleteAllOf(ctx, &corev1.Node{}, client.MatchingLabels(labels))
+}
+
+func (n nodeControl) SetNodeConditions(ctx context.Context, conditions []corev1.NodeCondition, nodeNames ...string) error {
+	targetNodes, err := n.ListNodes(ctx, func(node *corev1.Node) bool {
+		return slices.Contains(nodeNames, node.Name)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list nodes: %w", err)
+	}
+	var errs []error
+	for _, node := range targetNodes {
+		nodeClone := node.DeepCopy()
+		nodeClone.Status.Conditions = conditions
+		if err = n.client.Status().Update(ctx, nodeClone); err != nil {
+			errs = append(errs, fmt.Errorf("failed to update node conditions for node: %s %w", node.Name, err))
+		}
+	}
+	return errors.Join(errs...)
 }
 
 func CreateAndUntaintNode(ctx context.Context, nc api.NodeControl, taintKey string, nodes ...*corev1.Node) error {

@@ -13,7 +13,7 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler"
 )
 
-func CreateSchedulerAppConfig(restCfg *rest.Config) (*schedulerappconfig.Config, error) {
+func CreateSchedulerAppConfig(kubeConfigPath string, restCfg *rest.Config) (*schedulerappconfig.Config, error) {
 	client, eventsClient, err := createSchedulerClients(restCfg)
 	if err != nil {
 		return nil, err
@@ -23,6 +23,7 @@ func CreateSchedulerAppConfig(restCfg *rest.Config) (*schedulerappconfig.Config,
 	dynClient := dynamic.NewForConfigOrDie(restCfg)
 	dynamicInformerFactory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynClient, 0, corev1.NamespaceAll, nil)
 	schedulerConfig, err := embed.GetSchedulerConfig()
+	schedulerConfig.ClientConnection.Kubeconfig = kubeConfigPath
 	if err != nil {
 		return nil, err
 	}

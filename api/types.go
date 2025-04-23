@@ -52,6 +52,8 @@ type NodeControl interface {
 	DeleteAllNodes(ctx context.Context) error
 	// DeleteNodesMatchingLabels deletes all nodes matching labels
 	DeleteNodesMatchingLabels(ctx context.Context, labels map[string]string) error
+	// SetNodeConditions updates the node conditions of the given nodes,
+	SetNodeConditions(ctx context.Context, conditions []corev1.NodeCondition, nodeNames ...string) error
 }
 
 // NodeInfo contains relevant information about a node.

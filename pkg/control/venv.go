@@ -74,7 +74,7 @@ func (c *controlPlane) Start(ctx context.Context) error {
 	c.podControl = NewPodControl(k8sClient)
 	c.eventControl = NewEventControl(k8sClient)
 	slog.Info("Starting in-memory kube-scheduler...")
-	return c.startScheduler(ctx, c.restConfig)
+	return c.startScheduler(ctx, c.kubeConfigPath, c.restConfig)
 }
 
 func (c *controlPlane) Stop() error {
@@ -196,9 +196,9 @@ func createAuditPolicyFile(policyPath string) error {
 	return err
 }
 
-func (c *controlPlane) startScheduler(ctx context.Context, restConfig *rest.Config) error {
+func (c *controlPlane) startScheduler(ctx context.Context, kubeConfigPath string, restConfig *rest.Config) error {
 	slog.Info("creating in-memory kube-scheduler configuration...")
-	sac, err := util.CreateSchedulerAppConfig(restConfig)
+	sac, err := util.CreateSchedulerAppConfig(kubeConfigPath, restConfig)
 	if err != nil {
 		return err
 	}
