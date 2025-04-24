@@ -2,6 +2,7 @@ package control
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"github.com/unmarshall/kvcl/api"
 	"github.com/unmarshall/kvcl/pkg/common"
@@ -11,6 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/events"
+	"k8s.io/klog/v2"
 	schedulerappconfig "k8s.io/kubernetes/cmd/kube-scheduler/app/config"
 	"k8s.io/kubernetes/pkg/scheduler"
 	"log/slog"
@@ -205,6 +207,11 @@ func (c *controlPlane) startScheduler(ctx context.Context, kubeConfigPath string
 	}
 	recorderFactory := func(name string) events.EventRecorder {
 		return sac.EventBroadcaster.NewRecorder(name)
+	}
+	flagSet := flag.NewFlagSet("", flag.ContinueOnError)
+	klog.InitFlags(flagSet)
+	if err := flagSet.Parse([]string{"--v=6"}); err != nil {
+		return fmt.Errorf("failed to parse flags: %w", err)
 	}
 	s, err := scheduler.New(ctx,
 		sac.Client,
