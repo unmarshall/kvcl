@@ -7,7 +7,7 @@ for p in $(pgrep -f envtest); do kill -9 $p;done
 set -o allexport && source launch.env && set +o allexport
 if [[ -f "./bin/kvcl" ]]; then
   echo "Launching kvcl - which embeds kube-scheduler and also launches independent etcd and kube-apiserver processes"
-  ./bin/kvcl
+  ./bin/kvcl -audit-logs=true
   for p in $(pgrep -f envtest); do kill -9 $p;done
 else
   echoErr "ERR: kvcl is not at './bin/kvcl' - please run './hack/setup.sh' before executing './hack/launch.sh'"

@@ -156,9 +156,10 @@ func (c *controlPlane) startKAPIAndEtcd() (vEnv *envtest.Environment, cfg *rest.
 		if err != nil {
 			return
 		}
+		pid := os.Getpid()
 		asConfig.Configure().
 			Append("audit-policy-file", auditPolicyPath).
-			Append("audit-log-path", "/tmp/kvcl-requests.log")
+			Append("audit-log-path", fmt.Sprintf("/tmp/kvcl-%d.log", pid))
 	}
 	cpConfig := envtest.ControlPlane{Etcd: &etcdConfig, APIServer: &asConfig}
 
