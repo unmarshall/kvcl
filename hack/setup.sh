@@ -30,5 +30,5 @@ setup_envtest "$@"
 echo
 echo "Building KVCL..."
 [ -d bin ] || mkdir bin
-go build -o bin/kvcl -v cmd/main.go
+go build -buildvcs -o bin/kvcl  cmd/main.go
 echo "NOTE: You can now run ./hack/launch.sh which will launch etcd process, kube-apiserver process and kvcl process that embeds the kube-scheduler"
